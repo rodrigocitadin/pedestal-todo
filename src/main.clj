@@ -28,6 +28,8 @@
      ["/todo/:list-id/:item-id" :put echo :route-name :list-item-update]
      ["/todo/:list-id/:item-id" :delete echo :route-name :list-item-delete]}))
 
+
+;; Server things
 (def service-map
   (http/create-server
    {::http/routes routes
