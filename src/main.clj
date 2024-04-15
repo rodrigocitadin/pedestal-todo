@@ -10,6 +10,22 @@
 (def created (partial response  201))
 (def accepted (partial response  202))
 
+(defonce database (atom {}))
+
+(def db-interceptor
+  {:name :database-interceptor
+   :enter
+   (fn [context]
+     (update context :request assoc :database @database))
+   :leave
+   (fn [context]
+     (if-let [[op & args] (:tx-data context)]
+       (do
+         (apply swap! database op args)
+         (assoc-in context [:request :database] @database))
+       context))})
+
+;; Server things
 (def echo
   {:name :echo
    :enter
@@ -28,8 +44,6 @@
      ["/todo/:list-id/:item-id" :put echo :route-name :list-item-update]
      ["/todo/:list-id/:item-id" :delete echo :route-name :list-item-delete]}))
 
-
-;; Server things
 (def service-map
   (http/create-server
    {::http/routes routes
