@@ -73,6 +73,9 @@
 ;; For interactive development
 (defonce server (atom nil))
 
+(defn test-request [verb url]
+  (io.pedestal.test/response-for (::http/service-fn @server) verb url))
+
 (defn start-dev []
   (reset! server
           (http/start (http/create-server
