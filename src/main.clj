@@ -32,6 +32,44 @@
 
 (defonce database (atom {}))
 
+(defn find-list-by-id [dbval db-id]
+  (get dbval db-id))
+
+(def list-view
+  {:name :list-view
+   :enter
+   (fn [context]
+     (let [db-id (get-in context [:request :path-params :list-id])
+           the-list (when db-id
+                      (find-list-by-id
+                       (get-in context [:request :database])
+                       db-id))]
+       (cond-> context
+         the-list (assoc context :result the-list))))})
+
+(defn find-list-item-by-ids [dbval list-id item-id]
+  (get-in dbval [list-id :items item-id] nil))
+
+(def entity-render
+  {:name :entity-render
+   :leave
+   (fn [context]
+     (if-let [item (:result context)]
+       (assoc context :response (ok item))
+       context))})
+
+(def list-item-view
+  {:name :list-item-view
+   :leave
+   (fn [context]
+     (let [list-id (get-in context [:request :path-params :list-id])
+           item-id (and list-id
+                        (get-in context [:request :path-params :item-id]))
+           item (and item-id
+                     (find-list-item-by-ids (get-in context [:request :database]) list-id item-id))]
+       (cond-> context
+         item (assoc :result item))))})
+
 (def db-interceptor
   {:name :database-interceptor
    :enter
